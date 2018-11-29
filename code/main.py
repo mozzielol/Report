@@ -113,12 +113,13 @@ def save_acc(name,d):
 
 if __name__ == '__main__':
 	#Train the model.
-    (X_train,y_train),(X_test,y_test) = load_cifar10()
+    train_task, test_task = load_cifar10()
     model = Model('cnn')
-    model.val_data(X_train[:10000],y_train[:10000])
-    model.fit(X_train[:10000],y_train[:10000])
-    model.set_fisher_data(X_train[:10000],y_train[:10000])
-    model.transfer(X_train[10000:20000],y_train[10000:20000])
+    model.val_data(test_task[0][0], test_task[0][1])
+    model.fit(train_task[0][0], train_task[0][1])
+    #model.set_fisher_data(train_task[0][0], train_task[0][1])
+    model.fit(train_task[1][0], train_task[1][1])
+    
 
     '''
     print('--'*10,'kal','--'*10)
