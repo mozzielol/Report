@@ -90,12 +90,50 @@ def split_index(label):
 
 
 
+
 def load_cifar10():
+    (X_train,y_train),(X_test,y_test) = _load_cifar10()
+    y_train = y_train.reshape(-1,)
+    y_test = y_test.reshape(-1,)
+
+    indi_train_1 = np.where(y_train < 5)
+    indi_train_2 = np.where(y_train >= 5)
+    indi_test_1 = np.where(y_test < 5)
+    indi_test_2 = np.where(y_test >= 5)
+    
+    X_train_1 = X_train[indi_train_1]
+    X_train_2 = X_train[indi_train_2]
+    y_train_1 = to_categorical(y_train[indi_train_1],10)
+    y_train_2 = to_categorical(y_train[indi_train_2],10)
+
+    
+
+    #y_train = to_categorical(y_train, 10)
+    #y_test = to_categorical(y_test, 10)
+    X_test_1 = X_test[indi_test_1]
+    X_test_2 = X_test[indi_test_2]
+    y_test_1 = to_categorical(y_test[indi_test_1],10)
+    y_test_2 = to_categorical(y_test[indi_test_2],10)
+
+
+    train_task = []
+    train_task.append([X_train_1, y_train_1])
+    train_task.append([X_train_2, y_train_2])
+
+    test_task = []
+    test_task.append([X_test_1, y_test_1])
+    test_task.append([X_test_2, y_test_2])
+
+    return train_task, test_task
+
+
+
+
+def _load_cifar10():
     from keras.datasets import cifar10
     (X_train,y_train),(X_test,y_test) = cifar10.load_data()
 
-    y_train = to_categorical(y_train, 10)
-    y_test = to_categorical(y_test, 10)
+
     X_train = X_train.astype('float32')
     X_test = X_test.astype('float32')
     X_train  /= 255
