@@ -208,8 +208,8 @@ def load_SVHN():
     
     X_train_1 = X_train[indi_train_1]
     X_train_2 = X_train[indi_train_2]
-    y_train_1 = to_categorical(y_train[indi_train_1],5)
-    y_train_2 = to_categorical(y_train[indi_train_2]-5,5)
+    y_train_1 = to_categorical(y_train[indi_train_1],10)
+    y_train_2 = to_categorical(y_train[indi_train_2],10)
 
     
 
@@ -217,8 +217,8 @@ def load_SVHN():
     #y_test = to_categorical(y_test, 10)
     X_test_1 = X_test[indi_test_1]
     X_test_2 = X_test[indi_test_2]
-    y_test_1 = to_categorical(y_test[indi_test_1],5)
-    y_test_2 = to_categorical(y_test[indi_test_2]-5,5)
+    y_test_1 = to_categorical(y_test[indi_test_1],10)
+    y_test_2 = to_categorical(y_test[indi_test_2],10)
 
 
     train_task = []
