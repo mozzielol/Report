@@ -103,8 +103,8 @@ def load_cifar10():
     
     X_train_1 = X_train[indi_train_1]
     X_train_2 = X_train[indi_train_2]
-    y_train_1 = to_categorical(y_train[indi_train_1],10)
-    y_train_2 = to_categorical(y_train[indi_train_2],10)
+    y_train_1 = to_categorical(y_train[indi_train_1],5)
+    y_train_2 = to_categorical(y_train[indi_train_2]-5,5)
 
     
 
@@ -112,8 +112,8 @@ def load_cifar10():
     #y_test = to_categorical(y_test, 10)
     X_test_1 = X_test[indi_test_1]
     X_test_2 = X_test[indi_test_2]
-    y_test_1 = to_categorical(y_test[indi_test_1],10)
-    y_test_2 = to_categorical(y_test[indi_test_2],10)
+    y_test_1 = to_categorical(y_test[indi_test_1],5)
+    y_test_2 = to_categorical(y_test[indi_test_2]-5,5)
 
 
     train_task = []
@@ -142,11 +142,91 @@ def _load_cifar10():
     return (X_train,y_train),(X_test,y_test)
 
 
+def load_cifa10_ori():
+    from keras.datasets import cifar10
+    (X_train,y_train),(X_test,y_test) = cifar10.load_data()
+
+    y_train = to_categorical(y_train,10)
+    y_test = to_categorical(y_test,10)
 
 
+    X_train = X_train.astype('float32')
+    X_test = X_test.astype('float32')
+    X_train  /= 255
+    X_test /= 255
+
+    return X_train,y_train,X_test,y_test
 
 
+def load_SVHN_ori():
+    import numpy as np
+    import scipy.io as sio
+    import matplotlib.pyplot as plt
+    
+    train_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/train_32x32.mat')
+    test_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/test_32x32.mat')
 
+    # access to the dict
+    x_train = np.rollaxis(train_data['X'],3,0).astype('float32')
+    y_train = to_categorical((train_data['y'] - 1).reshape(-1,),10)
+
+    x_test = np.rollaxis(test_data['X'],3,0).astype('float32')
+    y_test = to_categorical((test_data['y'] - 1).reshape(-1,),10)
+
+    x_train /= 255
+    x_test /= 255
+
+    return x_train, y_train, x_test, y_test
+
+
+def load_SVHN():
+    import scipy.io as sio
+    
+    train_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/train_32x32.mat')
+    test_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/test_32x32.mat')
+
+    # access to the dict
+    X_train = np.rollaxis(train_data['X'],3,0).astype('float32')
+    y_train = train_data['y'] - 1
+    X_train /= 255
+
+
+    X_test = np.rollaxis(test_data['X'],3,0).astype('float32')
+    y_test = test_data['y'] - 1
+    X_test /= 255
+
+    y_train = y_train.reshape(-1,)
+    y_test = y_test.reshape(-1,)
+
+    indi_train_1 = np.where(y_train < 5)
+    indi_train_2 = np.where(y_train >= 5)
+    indi_test_1 = np.where(y_test < 5)
+    indi_test_2 = np.where(y_test >= 5)
+    
+    X_train_1 = X_train[indi_train_1]
+    X_train_2 = X_train[indi_train_2]
+    y_train_1 = to_categorical(y_train[indi_train_1],5)
+    y_train_2 = to_categorical(y_train[indi_train_2]-5,5)
+
+    
+
+    #y_train = to_categorical(y_train, 10)
+    #y_test = to_categorical(y_test, 10)
+    X_test_1 = X_test[indi_test_1]
+    X_test_2 = X_test[indi_test_2]
+    y_test_1 = to_categorical(y_test[indi_test_1],5)
+    y_test_2 = to_categorical(y_test[indi_test_2]-5,5)
+
+
+    train_task = []
+    train_task.append([X_train_1, y_train_1])
+    train_task.append([X_train_2, y_train_2])
+
+    test_task = []
+    test_task.append([X_test_1, y_test_1])
+    test_task.append([X_test_2, y_test_2])
+
+    return train_task, test_task
 
 
 
