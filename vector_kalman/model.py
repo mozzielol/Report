@@ -17,7 +17,7 @@ class Model(object):
 	def __init__(self,type='nn'):
 		self.num_classes = 5
 		self.history = None
-		self.epoch = 1
+		self.epoch = 10
 		self.verbose = True
 		self.info = Info()
 
@@ -29,22 +29,22 @@ class Model(object):
 
 		elif type == 'cnn':
 			self.model = Sequential()
-			self.model.add(Conv2D(32, (3, 3), padding='same', input_shape=(32, 32, 3),activation='relu'))
+			self.model.add(Conv2D(16, (3, 3), padding='same', input_shape=(32, 32, 3),activation='relu'))
 			#model.add(Activation('relu'))
-			self.model.add(Conv2D(32,(3, 3),activation='relu'))
+			self.model.add(Conv2D(16,(3, 3),activation='relu'))
 			#model.add(Activation('relu'))
 			self.model.add(MaxPooling2D(pool_size=(2, 2)))
 			#model.add(Dropout(0.25))
 
-			self.model.add(Conv2D(64, (3, 3), padding='same',activation='relu'))
+			#self.model.add(Conv2D(32, (3, 3), padding='same',activation='relu'))
 			#model.add(Activation('relu'))
-			self.model.add(Conv2D(64, (3,3),activation='relu'))
+			#self.model.add(Conv2D(16, (3,3),activation='relu'))
 			#model.add(Activation('relu'))
-			self.model.add(MaxPooling2D(pool_size=(2, 2)))
+			#self.model.add(MaxPooling2D(pool_size=(2, 2)))
 			#model.add(Dropout(0.25))
 
 			self.model.add(Flatten())
-			self.model.add(Dense(512,activation='relu'))
+			self.model.add(Dense(128,activation='relu'))
 			#model.add(Activation('relu'))
 			#model.add(Dropout(0.5))
 			self.model.add(Dense(self.num_classes,activation='softmax'))
@@ -76,9 +76,11 @@ class Model(object):
 	 - The model will calculate the gradient on D1[batch0], and never access to D1 again
 	'''
 	def transfer(self,X_train,y_train,num=None):
+
 		for layer in self.model.layers:
 			if 'dense' not in layer.name:
 				layer.trainable = False
+
 		self.model.compile(optimizer='sgd',loss='categorical_crossentropy',metrics=['accuracy'])
 		print(self.model.summary())
 		self.info.set_train_data(X_train,y_train)
@@ -157,7 +159,7 @@ class Kalman_filter_modifier(Callback):
 	def Kal_gain(self,cur_grad,pre_grad):
 		res = []
 		for i in range(len(pre_grad)):
-			temp = np.absolute(pre_grad[i]) / ( np.absolute(cur_grad[i])  + np.absolute(pre_grad[i]) )
+			temp = np.absolute(pre_grad[i]) / ( np.absolute(cur_grad[i]) * self.FISHER[i]  + np.absolute(pre_grad[i]) )
 			temp[np.isnan(temp)] = 1
 			#temp = pre_grad[i] / ( cur_grad[i]  * self.FISHER[i] + pre_grad[i] )
 			#temp[np.isnan(temp)] = 0.5
@@ -222,12 +224,18 @@ class Kalman_filter_modifier(Callback):
 	def on_batch_end(self,batch,logs={}):
 		self.cur_w = get_weights(self.model)
 		self.cur_g = get_weight_grad(self.model,self.X_train[batch*128:(batch+1)*128],self.y_train[batch*128:(batch+1)*128])
-		
+
 		Kalman_gain = self.Kal_gain(self.cur_g,self.pre_g)
 		new_w = []
-		for P,Z,E,F in zip(self.pre_w,self.cur_w,Kalman_gain,self.FISHER):
+		for P,Z,E in zip(self.pre_w,self.cur_w,Kalman_gain):
 			new_w.append(P + (Z-P) * E  )	
-		self.model.set_weights(new_w)
+		
+        #self.model.set_weights(new_w)
+		count = 0
+		for layer in self.model.layers:
+			if layer.trainable == True:
+				layer.set_weights([new_w[count],new_w[count+1]])
+				count += 2
 		new_g = []
 		for kal,g in zip(Kalman_gain,self.pre_g):
 			new_g.append((1- kal) * g )
