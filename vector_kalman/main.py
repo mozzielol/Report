@@ -36,8 +36,8 @@ def acc_plot(name,acc,data_num):
 #Load the drift data
 #task = create_permuted_mnist_task(3)
 #train_set,test_set,vali_set = create_disjoint_mnist_task()
-TASK_NUM = 10
-task = create_permuted_mnist_task(TASK_NUM)
+#TASK_NUM = 10
+#task = create_permuted_mnist_task(TASK_NUM)
 
 
 #record the test accuracy. 
