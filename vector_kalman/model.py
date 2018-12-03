@@ -15,7 +15,7 @@ class Model(object):
   	 	- history: it will record all the accuracy on training dataset and validation dataset
 	'''
 	def __init__(self,type='nn'):
-		self.num_classes = 5
+		self.num_classes = 10
 		self.history = None
 		self.epoch = 10
 		self.verbose = True
