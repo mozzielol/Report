@@ -15,9 +15,9 @@ class Model(object):
   	 	- history: it will record all the accuracy on training dataset and validation dataset
 	'''
 	def __init__(self,type='nn'):
-		self.num_classes = 10
+		self.num_classes = 5
 		self.history = None
-		self.epoch = 10
+		self.epoch = 1
 		self.verbose = True
 		self.info = Info()
 
@@ -76,6 +76,11 @@ class Model(object):
 	 - The model will calculate the gradient on D1[batch0], and never access to D1 again
 	'''
 	def transfer(self,X_train,y_train,num=None):
+		for layer in self.model.layers:
+			if 'dense' not in layer.name:
+				layer.trainable = False
+		self.model.compile(optimizer='sgd',loss='categorical_crossentropy',metrics=['accuracy'])
+		print(self.model.summary())
 		self.info.set_train_data(X_train,y_train)
 		kalman_filter = Kalman_filter_modifier(info=self.info,num=num)
 		history = self.model.fit(X_train,y_train,epochs=self.epoch,batch_size=128,verbose=self.verbose,callbacks=[kalman_filter],validation_data=(self.X_test,self.y_test))
@@ -148,39 +153,14 @@ class Kalman_filter_modifier(Callback):
 		self.X_train = self.info.args['X_train']
 		self.y_train = self.info.args['y_train']
 
-	'''
-	1. F - the firsher information , (0,1)
-	2. A - Angle response to F , (0, theta), theta is the angle between pre_g and cur_g
-	3. P - the vetor of Fisher
-	3. pre_g* - the distance of preg to P
-	4. cur_g* - the distance of curg to P
-	5. cur_g - should be the state2 - state1.
-	'''
-
-	import numpy as np
-
-
-	def unit_vector(self,vector):
-		return vector / np.linalg.norm(vector)
-
-	def angle_between(self,v1, v2):
-	
-		v1_u = self.unit_vector(v1)
-		v2_u = self.unit_vector(v2)
-		return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-
+	#Calculate the Kalman Gain based on current gradients and previous gradients
 	def Kal_gain(self,cur_grad,pre_grad):
 		res = []
-		out = lambda x,y: self.angle_between(x,y) * 180 / np.pi
 		for i in range(len(pre_grad)):
-			angle = out(pre_grad[i].reshape(-1,),cur_grad[i].reshape(-1,))
-			fisher_angle = angle * self.FISHER[i]
-
-			pre = pre_grad[i] * np.sin((1 - self.FISHER[i]) * angle)
-			cur = cur_grad[i] * np.sin(self.FISHER[i] * angle)
-			temp  = pre / (pre + cur)
-			#temp = direction * np.absolute(pre_grad[i]) / ( np.absolute(cur_grad[i])  * self.FISHER[i] + np.absolute(pre_grad[i]) )
+			temp = np.absolute(pre_grad[i]) / ( np.absolute(cur_grad[i])  + np.absolute(pre_grad[i]) )
 			temp[np.isnan(temp)] = 1
+			#temp = pre_grad[i] / ( cur_grad[i]  * self.FISHER[i] + pre_grad[i] )
+			#temp[np.isnan(temp)] = 0.5
 			res.append(temp)
 		return res
 
@@ -218,6 +198,7 @@ class Kalman_filter_modifier(Callback):
 	#if use previous knowledge, update previous gradients(self.pre_g)
 	def on_batch_begin(self,batch,logs={}):
 		self.pre_w = get_weights(self.model)
+		
 
 
 		
@@ -241,14 +222,11 @@ class Kalman_filter_modifier(Callback):
 	def on_batch_end(self,batch,logs={}):
 		self.cur_w = get_weights(self.model)
 		self.cur_g = get_weight_grad(self.model,self.X_train[batch*128:(batch+1)*128],self.y_train[batch*128:(batch+1)*128])
-		for P,C,G in zip(self.pre_w,self.cur_w,self.cur_g):
-			G = C - P
-
 		
 		Kalman_gain = self.Kal_gain(self.cur_g,self.pre_g)
 		new_w = []
-		for P,Z,E in zip(self.pre_w,self.cur_w,Kalman_gain):
-			new_w.append(P + E)	
+		for P,Z,E,F in zip(self.pre_w,self.cur_w,Kalman_gain,self.FISHER):
+			new_w.append(P + (Z-P) * E  )	
 		self.model.set_weights(new_w)
 		new_g = []
 		for kal,g in zip(Kalman_gain,self.pre_g):
