@@ -1,5 +1,6 @@
-
-from utils import create_permuted_mnist_task, load_cifar10, create_disjoint_mnist_task
+import os
+#os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
+from utils import create_permuted_mnist_task, load_cifar10, create_disjoint_mnist_task, load_cifa10_ori,load_SVHN
 from model import Model
 import matplotlib.pyplot as plt
 
@@ -113,14 +114,12 @@ def save_acc(name,d):
 
 if __name__ == '__main__':
 	#Train the model.
-    '''
-    train_task, test_task = load_cifar10()
+    train_task, test_task = load_SVHN()
     model = Model('cnn')
     model.val_data(test_task[0][0], test_task[0][1])
     model.fit(train_task[0][0], train_task[0][1])
     model.set_fisher_data(train_task[0][0], train_task[0][1])
     model.transfer(train_task[1][0], train_task[1][1])
-    '''
     '''
     train_set,test_set,vali_set = create_disjoint_mnist_task()
     model = Model()
@@ -129,7 +128,7 @@ if __name__ == '__main__':
     model.set_fisher_data(train_set[0][0], train_set[0][1])
     model.transfer(train_set[1][0], train_set[1][1])
     '''
-    
+    '''
     print('--'*10,'kal','--'*10)
     kal_d1,kal_d2,kal_d3 = train('kal')
     save_acc('kal',[kal_d1,kal_d2,kal_d3])
@@ -145,4 +144,4 @@ if __name__ == '__main__':
     acc_plot('kal',kal_d1,1)
     acc_plot('kal',kal_d2,2)
     acc_plot('kal',kal_d3,3)
-    
+    '''
