@@ -4,8 +4,11 @@ import keras.backend as K
 
 
 def get_weights(model):
-
-    return model.get_weights()
+    w = model.trainable_weights
+    weights = []
+    for i in w:
+        weights.append(K.eval(i))
+    return weights
 
 
 def get_gradients(model):
@@ -182,8 +185,8 @@ def load_SVHN_ori():
 def load_SVHN():
     import scipy.io as sio
     
-    train_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/train_32x32.mat')
-    test_data = sio.loadmat('/Users/lihonglin/Desktop/dataset/test_32x32.mat')
+    train_data = sio.loadmat('/home/dp00143/Desktop/dataset/train_32x32.mat')
+    test_data = sio.loadmat('/home/dp00143/Desktop/dataset/test_32x32.mat')
 
     # access to the dict
     X_train = np.rollaxis(train_data['X'],3,0).astype('float32')
